@@ -70,4 +70,20 @@ public class Unpacker
     {
         // replacing assets logic goes here;
     }
+
+    public void CleanUpAssets()
+    {
+        Console.WriteLine("Cleaning up assets...");
+        Console.WriteLine("Deleting tmp assets...");
+        Directory.Delete(tmpAssetFolder, true);
+        Console.WriteLine("Restoring modded assets...");
+        foreach (var bundle in Directory.GetDirectories(limbusCompanyFolder, "*", SearchOption.TopDirectoryOnly))
+        {
+            string __data = Directory.GetFiles(bundle, "*__data*", SearchOption.AllDirectories).FirstOrDefault();
+            string __original = __data.Replace("__data", "__original");
+            if (!File.Exists(__original)) continue;
+            Console.WriteLine($"Restoring {__data}...");
+            File.Replace(__original, __data, __data);
+        }
+    }
 }
