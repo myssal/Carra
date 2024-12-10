@@ -9,6 +9,7 @@
 
     <ItemGroup>
       <PackageReference Include="AssetsTools.NET" Version="3.0.0" />
+      <PackageReference Include="Joveler.Compression.XZ" Version="4.3.0" />
       <PackageReference Include="SharpCompress" Version="0.38.0" />
       <PackageReference Include="xxHash.NET" Version="1.0.2" />
     </ItemGroup>
@@ -16,6 +17,8 @@
     <ItemGroup>
       <Folder Include="TestBundle\1ce\mod\" />
       <Folder Include="TestBundle\1ce\raw\" />
+      <Folder Include="TestBundle\py\mod\" />
+      <Folder Include="TestBundle\py\original\" />
     </ItemGroup>
 
 </Project>

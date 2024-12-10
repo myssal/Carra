@@ -138,12 +138,20 @@ public class LunarCompress
 							string outputSubFolder = Path.Combine(output, key.Substring(0, key.IndexOf("\\")));
 							if (!Directory.Exists(outputSubFolder))
 								Directory.CreateDirectory(outputSubFolder);
-							//File.WriteAllBytes(Path.Combine(output, key),LZMA.Compress(body));
+							File.WriteAllBytes("test.bytes", body);
+							Compress.XZCompress("test.bytes", Path.Combine(output, key));
 						}
 					}
 				}
 				Console.WriteLine($"New obj count: {count}");
-				ZipFile.CreateFromDirectory(output, $"{output}.carra2");
+				if (File.Exists("test.bytes")) File.Delete("test.bytes");
+				if (File.Exists($"{output}.carra2")) Console.WriteLine($"{output}.carra2 already exists!");
+				else
+				{
+					ZipFile.CreateFromDirectory(output, $"{output}.carra2");
+					Directory.Delete(output, true);
+				}
+				
 			}
 		}
 }

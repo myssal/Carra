@@ -1,6 +1,4 @@
-﻿using System.Text;
-using Carra.Carra;
-using SevenZip.Compression.LZMA;
+﻿using static Carra.Carra.Init;
 
 namespace Carra
 {
@@ -8,10 +6,11 @@ namespace Carra
     {
         public static void Main(string[] args)
         {
+            InitNativeLibrary();
             var watch = System.Diagnostics.Stopwatch.StartNew();
-            string test = @"C:\Users\sangd\AppData\Roaming\LimbusCompanyMods\Yearning-Mircalla Sancho mod.zip";
-            LunarCompress.CompressLunarMod(test, test.Replace(".zip", ""));
-            Unpacker unpacker = new Unpacker();
+            // string test = @"";
+            // LunarCompress.CompressLunarMod(test, test.Replace(".zip", ""));
+            // Unpacker unpacker = new Unpacker();
             //unpacker.ExtractAssets();
             //unpacker.PatchAssets();
             watch.Stop();
@@ -19,5 +18,6 @@ namespace Carra
             Console.WriteLine(elapsedMs);
 
         }
+        
     }
 }
