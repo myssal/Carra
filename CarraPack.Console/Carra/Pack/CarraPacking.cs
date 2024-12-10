@@ -5,8 +5,14 @@ using Extensions.Data;
 
 namespace Carra.Carra;
 
-public class LunarCompress
+public class CarraPacking
 {
+	
+	public CarraPacking()
+	{
+		
+	}
+	
     public static List<string> ScanLunarModRoot(string zipPath)
     {
         List<string> vanillaData = new List<string>();
@@ -22,7 +28,11 @@ public class LunarCompress
         }
         return vanillaData;
     }
-    
+		
+    public static void Metadata(string modName, string author, string? description, string targetLocation)
+    {
+	    
+    }
     public static byte[] GetRawData(AssetFileInfo aFileInfo, AssetsFile aFile)
     {
 	    // written by Zeno <3
@@ -133,13 +143,13 @@ public class LunarCompress
 								Console.WriteLine($"New object found: {key}");
 								count++;
 							}
-							key += $".{texInfo.TypeId.ToString()}";
+							key += $".{texInfo.ScriptTypeIndex.ToString()}";
 							Console.WriteLine($"Writing {key}...");
 							string outputSubFolder = Path.Combine(output, key.Substring(0, key.IndexOf("\\")));
 							if (!Directory.Exists(outputSubFolder))
 								Directory.CreateDirectory(outputSubFolder);
 							File.WriteAllBytes("test.bytes", body);
-							Compress.XZCompress("test.bytes", Path.Combine(output, key));
+							LZMA_XZ.XZCompress("test.bytes", Path.Combine(output, key));
 						}
 					}
 				}
