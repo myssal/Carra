@@ -1,4 +1,4 @@
-﻿using static Carra.Carra.Init;
+﻿using static Carra.Carra.LZMA_XZ;
 
 namespace Carra
 {

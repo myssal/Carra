@@ -1,7 +1,7 @@
 using Joveler.Compression.XZ;
 namespace Carra.Carra;
 
-public class Compress
+public partial class LZMA_XZ
 {
     public static void XZCompress(string input, string output)
     { 

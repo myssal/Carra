@@ -16,7 +16,7 @@ public class Unpacker
         limbusCompanyFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "..", "LocalLow", "Unity", "ProjectMoon_LimbusCompany");
     }
     public DirectoryInfo CreateTmpFolder() => Directory.CreateTempSubdirectory("carra_");
-
+    
     public void ExtractAssets()
     {
         List<string> carraFiles = Directory.GetFiles(modFolder, "*.carra*", SearchOption.AllDirectories).ToList();
@@ -53,7 +53,6 @@ public class Unpacker
             // check if that bundle is modified
             string expectedPath = Path.Combine(tmpAssetFolder, bundle.Substring(bundle.LastIndexOf("\\") + 1));
             if (!Directory.Exists(expectedPath)) continue;
-            
             string __data = Directory.GetFiles(expectedPath, "*__data*", SearchOption.AllDirectories).FirstOrDefault();
             string __original = __data.Replace("__data", "__original");
             Console.WriteLine($"Backing up {__data}...");
@@ -61,14 +60,17 @@ public class Unpacker
             
             // patching assets
             Console.WriteLine($"Patching {__data}...");
-            PatchBundle();
+            PatchBundle(__data, expectedPath);
             Console.WriteLine($"Patching complete {__original} ({new FileInfo(__original).Length}) ->{__data} ({new FileInfo(__data).Length})");
         }
     }
 
-    public void PatchBundle()
+    public void PatchBundle(string original, string patch)
     {
         // replacing assets logic goes here;
+        // original: limbus bundle need being patched
+        // patch: temp folder contains diff assets
+        
     }
 
     public void CleanUpAssets()

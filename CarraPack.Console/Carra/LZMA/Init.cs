@@ -3,7 +3,7 @@ using Joveler.Compression.XZ;
 
 namespace Carra.Carra;
 
-public class Init
+public partial class LZMA_XZ
 {
     public static void InitNativeLibrary()
     {
