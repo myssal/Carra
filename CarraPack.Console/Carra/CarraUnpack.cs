@@ -2,13 +2,13 @@ using System.IO.Compression;
 
 namespace Carra.Carra;
 
-public class Unpacker
+public class CarraUnpack
 {
     private string modFolder { get; set; }
     public string limbusCompanyFolder { get; set; }
     public string tmpAssetFolder {get; set;}
 
-    public Unpacker()
+    public CarraUnpack()
     {
         tmpAssetFolder = CreateTmpFolder().FullName;
         modFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)

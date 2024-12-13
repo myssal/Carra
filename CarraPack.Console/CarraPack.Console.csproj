@@ -14,7 +14,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Carra\Sound\" />
       <Folder Include="TestBundle\1ce\mod\" />
       <Folder Include="TestBundle\1ce\raw\" />
       <Folder Include="TestBundle\py\mod\" />
