@@ -9,24 +9,26 @@ public class Carra
 {
 	public string originalBundleFolder { get; set; }
 	public string modBundleFolder { get; set; }
-	public string? modName {get; set;}
-	public string? modAuthor {get; set;}
-	public string? modDescription {get; set;}
+	public string modName { get; set; } 
+	public string modAuthor { get; set; } 
+	public string modDescription { get; set; } 
 	public DirectoryInfo tmpFolder { get; set; }
-
-	public Carra(string originalBundleFolder, string modBundleFolder, string modName, string? modAuthor, string? modDescription)
+	public List<string> typeTreeIndex { get; set; }
+	public Carra(string originalBundleFolder, string modBundleFolder, string? modName, string? modAuthor, string? modDescription)
 	{
 		this.originalBundleFolder = originalBundleFolder;
 		this.modBundleFolder = modBundleFolder;
-		this.modName = modName;
-		this.modAuthor = modAuthor;
-		this.modDescription = modDescription;
+		this.modName = modName ?? "";
+		this.modAuthor = modAuthor ?? "";
+		this.modDescription = modDescription ?? "";
+		typeTreeIndex = new List<string>();
 		tmpFolder = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(),
 			$"carra_{DateTime.Now.ToString("yyyy-MM-dd-H-m-ss")}"));
 	}
 
 	public Carra(string zipFile)
 	{
+		typeTreeIndex = new List<string>();
 		(originalBundleFolder, modBundleFolder) = ScanLunarModRoot(zipFile);
 		tmpFolder = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(),
 			$"carra_{DateTime.Now.ToString("yyyy-MM-dd-H-m-ss")}"));
@@ -35,6 +37,19 @@ public class Carra
 	{
 		if (string.IsNullOrEmpty(modName)) return new DirectoryInfo(modBundleFolder).Name; 
 		return modName;
+	}
+
+	public void Metadata(string output)
+	{
+		using (StreamWriter sw = new StreamWriter(Path.Combine(output, "metadata")))
+		{
+			sw.WriteLine("# Metadata");
+			sw.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+			sw.WriteLine($"name: {modName}");
+			sw.WriteLine($"author: {modAuthor}");
+			sw.WriteLine($"description: {modDescription}");
+		}
+		
 	}
     public static (string, string) ScanLunarModRoot(string zipPath)
     {
@@ -63,7 +78,7 @@ public class Carra
 	    return buffer;
     }
 
-    public static Dictionary<string, ulong> Dump(string bundleName, string rootFolder)
+    public Dictionary<string, ulong> Dump(string bundleName, string rootFolder)
     {
 	    var manager = new AssetsManager();
 	    var bunInst = manager.LoadBundleFile(bundleName, true);
@@ -75,12 +90,12 @@ public class Carra
 	    foreach (var texInfo in afile.Metadata.AssetInfos)
 	    {
 		    string key = Path.Combine(bundleName.Replace(@"\__data", string.Empty).Replace($"{rootFolder}\\", String.Empty), texInfo.PathId.ToString());
-		    Console.WriteLine($"- {key}");
 		    var body = GetRawData(texInfo, afile);
 		    var state = XXHash.CreateState64();
 		    XXHash.UpdateState64(state, body);
 		    var digest = XXHash.DigestState64(state);
 		    dump[key] = digest;
+		    typeTreeIndex.Add($".{texInfo.ScriptTypeIndex.ToString()}");
 	    }
 	    return dump;
     }
@@ -113,7 +128,7 @@ public class Carra
 						var afile = afileInst.file;
 						foreach (var texInfo in afile.Metadata.AssetInfos)
 						{
-							string key = Path.Combine(expectedModBundlePath.Replace(@"\__data", string.Empty).Replace(modBundleFolder, String.Empty), texInfo.PathId.ToString());
+							string key = Path.Combine(expectedModBundlePath.Replace(@"\__data", string.Empty).Replace($"{modBundleFolder}\\", String.Empty), texInfo.PathId.ToString());
 							byte[] body = GetRawData(texInfo, afile);
 							var state = XXHash.CreateState64();
 							XXHash.UpdateState64(state, body);
@@ -125,18 +140,20 @@ public class Carra
 							key += $".{texInfo.ScriptTypeIndex.ToString()}";
 							Console.WriteLine($"Writing {key}...");
 							
-							// File.WriteAllBytes("test.bytes", body);
-							// LZMA_XZ.XZCompress("test.bytes", Path.Combine(output, key));
+							File.WriteAllBytes("test.bytes", body);
+							var outputDir = Directory.CreateDirectory(Path.Combine(output, key.Remove(key.LastIndexOf("\\"))));
+							LZMA_XZ.XZCompress("test.bytes", Path.Combine(output, key));
 						}
+						Metadata(output);
 					}
 				}
-				// if (File.Exists("test.bytes")) File.Delete("test.bytes");
-				// if (File.Exists($"{output}.carra3")) Console.WriteLine($"{output}.carra3 already exists!");
-				// else
-				// {
-				// 	ZipFile.CreateFromDirectory(output, $"{output}.carra2");
-				// 	Directory.Delete(output, true);
-				// }
+				if (File.Exists("test.bytes")) File.Delete("test.bytes");
+				if (File.Exists($"{output}.carra3")) Console.WriteLine($"{output}.carra3 already exists!");
+				else
+				{
+					ZipFile.CreateFromDirectory(output, $"{output}.carra3");
+					Directory.Delete(output, true);
+				}
 				
 			}
 		}

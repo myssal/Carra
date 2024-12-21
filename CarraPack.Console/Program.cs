@@ -9,9 +9,9 @@ namespace Carra
         {
             InitNativeLibrary();
             var watch = System.Diagnostics.Stopwatch.StartNew();
-            string test = @"D:\Downloads\Yearning-Mircalla Sancho mod.zip";
+            string test = @"";
             Carra.Carra carraInst = new Carra.Carra(test);
-            carraInst.CompressLunarMod(@"D:\Downloads\test");
+            carraInst.CompressLunarMod(@"");
             watch.Stop();
             var elapsedMs = watch.ElapsedMilliseconds;
             Console.WriteLine(elapsedMs);
