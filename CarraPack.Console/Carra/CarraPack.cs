@@ -13,7 +13,6 @@ public class Carra
 	public string modAuthor { get; set; } 
 	public string modDescription { get; set; } 
 	public DirectoryInfo tmpFolder { get; set; }
-	public List<string> typeTreeIndex { get; set; }
 	public Carra(string originalBundleFolder, string modBundleFolder, string? modName, string? modAuthor, string? modDescription)
 	{
 		this.originalBundleFolder = originalBundleFolder;
@@ -21,14 +20,12 @@ public class Carra
 		this.modName = modName ?? "";
 		this.modAuthor = modAuthor ?? "";
 		this.modDescription = modDescription ?? "";
-		typeTreeIndex = new List<string>();
 		tmpFolder = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(),
 			$"carra_{DateTime.Now.ToString("yyyy-MM-dd-H-m-ss")}"));
 	}
 
 	public Carra(string zipFile)
 	{
-		typeTreeIndex = new List<string>();
 		(originalBundleFolder, modBundleFolder) = ScanLunarModRoot(zipFile);
 		tmpFolder = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(),
 			$"carra_{DateTime.Now.ToString("yyyy-MM-dd-H-m-ss")}"));
@@ -41,7 +38,7 @@ public class Carra
 
 	public void Metadata(string output)
 	{
-		using (StreamWriter sw = new StreamWriter(Path.Combine(output, "metadata")))
+		using (StreamWriter sw = new StreamWriter(Path.Combine(tmpFolder.FullName, "metadata")))
 		{
 			sw.WriteLine("# Metadata");
 			sw.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
@@ -49,7 +46,7 @@ public class Carra
 			sw.WriteLine($"author: {modAuthor}");
 			sw.WriteLine($"description: {modDescription}");
 		}
-		
+		LZMA_XZ.XZCompress(Path.Combine(tmpFolder.FullName, "metadata"), output);
 	}
     public static (string, string) ScanLunarModRoot(string zipPath)
     {
@@ -84,9 +81,8 @@ public class Carra
 	    var bunInst = manager.LoadBundleFile(bundleName, true);
 	    var afileInst = manager.LoadAssetsFileFromBundle(bunInst, 0, false);
 	    var afile = afileInst.file;
-		
-	    var dump = new Dictionary<string, ulong>();
 
+	    var dump = new Dictionary<string, ulong>();
 	    foreach (var texInfo in afile.Metadata.AssetInfos)
 	    {
 		    string key = Path.Combine(bundleName.Replace(@"\__data", string.Empty).Replace($"{rootFolder}\\", String.Empty), texInfo.PathId.ToString());
@@ -95,7 +91,6 @@ public class Carra
 		    XXHash.UpdateState64(state, body);
 		    var digest = XXHash.DigestState64(state);
 		    dump[key] = digest;
-		    typeTreeIndex.Add($".{texInfo.ScriptTypeIndex.ToString()}");
 	    }
 	    return dump;
     }
@@ -116,7 +111,6 @@ public class Carra
 					Console.WriteLine($"Processing {vanillaPath}...");
 					Console.WriteLine($"Mapping assets...");
 					vanillaDicts = Dump(vanillaPath, originalBundleFolder);
-					
 					string expectedModBundlePath = vanillaPath.Replace(originalBundleFolder, modBundleFolder);
 					if (!File.Exists(expectedModBundlePath))
 						Console.WriteLine($"File {expectedModBundlePath} does not exist, skipping.");
@@ -130,23 +124,24 @@ public class Carra
 						{
 							string key = Path.Combine(expectedModBundlePath.Replace(@"\__data", string.Empty).Replace($"{modBundleFolder}\\", String.Empty), texInfo.PathId.ToString());
 							byte[] body = GetRawData(texInfo, afile);
-							var state = XXHash.CreateState64();
+							var state = XXHash.CreateState64();	
 							XXHash.UpdateState64(state, body);
 							var digest = XXHash.DigestState64(state);
 							if (vanillaDicts.ContainsKey(key) && vanillaDicts[key] == digest) continue;
 							if (!vanillaDicts.ContainsKey(key))
 								Console.WriteLine($"New object found: {key}");
-							
-							key += $".{texInfo.ScriptTypeIndex.ToString()}";
+
+							key += $".{texInfo.TypeIdOrIndex.ToString()}";
 							Console.WriteLine($"Writing {key}...");
 							
 							File.WriteAllBytes("test.bytes", body);
 							var outputDir = Directory.CreateDirectory(Path.Combine(output, key.Remove(key.LastIndexOf("\\"))));
 							LZMA_XZ.XZCompress("test.bytes", Path.Combine(output, key));
 						}
-						Metadata(output);
+						Metadata(Path.Combine(output, "metadata"));
 					}
 				}
+				
 				if (File.Exists("test.bytes")) File.Delete("test.bytes");
 				if (File.Exists($"{output}.carra3")) Console.WriteLine($"{output}.carra3 already exists!");
 				else
