@@ -134,9 +134,9 @@ public class Carra
 							key += $".{texInfo.TypeIdOrIndex.ToString()}";
 							Console.WriteLine($"Writing {key}...");
 							
-							File.WriteAllBytes("test.bytes", body);
+							File.WriteAllBytes(Path.Combine(tmpFolder.FullName, "test.bytes"), body);
 							var outputDir = Directory.CreateDirectory(Path.Combine(output, key.Remove(key.LastIndexOf("\\"))));
-							LZMA_XZ.XZCompress("test.bytes", Path.Combine(output, key));
+							LZMA_XZ.XZCompress(Path.Combine(tmpFolder.FullName, "test.bytes"), Path.Combine(output, key));
 						}
 						Metadata(Path.Combine(output, "metadata"));
 					}

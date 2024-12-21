@@ -9,7 +9,7 @@ public class Decompress
         XZDecompressOptions decompOpts = new XZDecompressOptions();
 
         using (FileStream fsComp = new FileStream(input, FileMode.Create))
-        using (FileStream fsDecomp = new FileStream(output, FileMode.Open))
+        using (FileStream fsDecomp = new FileStream(output, FileMode.Create))
         using (XZStream zs = new XZStream(fsComp, decompOpts))
         {
             zs.CopyTo(fsDecomp);
