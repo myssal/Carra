@@ -2,7 +2,8 @@ using System.IO.Compression;
 using AssetsTools.NET;
 using AssetsTools.NET.Extra;
 using Extensions.Data;
-
+using Microsoft.Extensions.Logging;
+using Carra.Carra.Logging;
 namespace Carra.Carra;
 
 public class Carra
@@ -13,6 +14,7 @@ public class Carra
 	public string modAuthor { get; set; } 
 	public string modDescription { get; set; } 
 	public DirectoryInfo tmpFolder { get; set; }
+	public ILogger logFactory { get; set; }	
 	public Carra(string originalBundleFolder, string modBundleFolder, string? modName, string? modAuthor, string? modDescription)
 	{
 		this.originalBundleFolder = originalBundleFolder;
@@ -22,6 +24,7 @@ public class Carra
 		this.modDescription = modDescription ?? "";
 		tmpFolder = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(),
 			$"carra_{DateTime.Now.ToString("yyyy-MM-dd-H-m-ss")}"));
+		logFactory = Logging.Logging.CreateLogFactory("Carra");
 	}
 
 	public Carra(string zipFile)
@@ -29,6 +32,7 @@ public class Carra
 		(originalBundleFolder, modBundleFolder) = ScanLunarModRoot(zipFile);
 		tmpFolder = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(),
 			$"carra_{DateTime.Now.ToString("yyyy-MM-dd-H-m-ss")}"));
+		logFactory = Logging.Logging.CreateLogFactory("Carra");
 	}
 	public string CreateModName()
 	{
@@ -102,18 +106,18 @@ public class Carra
 			List<string> modBundles = Directory.GetFiles(modBundleFolder, "*__data", SearchOption.AllDirectories).ToList();
 			Dictionary<string, ulong> vanillaDicts = new Dictionary<string, ulong>();
 			if (originalBundles.Count == 0)
-				Console.WriteLine("No asset files found.");
+				logFactory.LogInformation("No bundles found in root directory!");
 			else
 			{
 				foreach (string vanillaPath in originalBundles)
 				{
 					// vanilla assets processing
-					Console.WriteLine($"Processing {vanillaPath}...");
-					Console.WriteLine($"Mapping assets...");
+					logFactory.LogInformation($"Processing {vanillaPath}...");
+					logFactory.LogInformation($"Mapping assets...");
 					vanillaDicts = Dump(vanillaPath, originalBundleFolder);
 					string expectedModBundlePath = vanillaPath.Replace(originalBundleFolder, modBundleFolder);
 					if (!File.Exists(expectedModBundlePath))
-						Console.WriteLine($"File {expectedModBundlePath} does not exist, skipping.");
+						logFactory.LogInformation($"File {expectedModBundlePath} does not exist, skipping.");
 					else
 					{
 						// mod assets processing
@@ -129,10 +133,10 @@ public class Carra
 							var digest = XXHash.DigestState64(state);
 							if (vanillaDicts.ContainsKey(key) && vanillaDicts[key] == digest) continue;
 							if (!vanillaDicts.ContainsKey(key))
-								Console.WriteLine($"New object found: {key}");
+								logFactory.LogInformation($"New object found: {key}");
 
 							key += $".{texInfo.TypeIdOrIndex.ToString()}";
-							Console.WriteLine($"Writing {key}...");
+							logFactory.LogInformation($"Writing {key}...");
 							
 							File.WriteAllBytes(Path.Combine(tmpFolder.FullName, "test.bytes"), body);
 							var outputDir = Directory.CreateDirectory(Path.Combine(output, key.Remove(key.LastIndexOf("\\"))));
@@ -143,7 +147,7 @@ public class Carra
 				}
 				
 				if (File.Exists("test.bytes")) File.Delete("test.bytes");
-				if (File.Exists($"{output}.carra3")) Console.WriteLine($"{output}.carra3 already exists!");
+				if (File.Exists($"{output}.carra3")) logFactory.LogInformation($"{output}.carra3 already exists!");
 				else
 				{
 					ZipFile.CreateFromDirectory(output, $"{output}.carra3");
