@@ -1,5 +1,5 @@
-﻿using Carra.Carra;
-using static Carra.Carra.LZMA_XZ;
+﻿using Carra;
+using static Carra.LZMA_XZ;
 
 namespace Carra
 {
@@ -12,7 +12,7 @@ namespace Carra
             var watch = System.Diagnostics.Stopwatch.StartNew();
             // main test code
             string testUnit = @"D:\Downloads\TestUnit\TestUnit\Yearning-Mircalla Don  mod.zip";
-            Carra.Carra cr = new Carra.Carra(testUnit);
+            Carra cr = new Carra(testUnit);
             cr.CompressLunarMod(testUnit.Replace("zip", "carra3"));
             // end main test code
             watch.Stop();

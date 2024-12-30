@@ -3,8 +3,8 @@ using AssetsTools.NET;
 using AssetsTools.NET.Extra;
 using Extensions.Data;
 using Microsoft.Extensions.Logging;
-using Carra.Carra.Logging;
-namespace Carra.Carra;
+using Carra.Logging;
+namespace Carra;
 
 public class Carra
 {
@@ -14,7 +14,7 @@ public class Carra
 	public string modAuthor { get; set; } 
 	public string modDescription { get; set; } 
 	public DirectoryInfo tmpFolder { get; set; }
-	public ILogger logFactory { get; set; }	
+	public static ILogger logFactory { get; set; }	
 	public Carra(string originalBundleFolder, string modBundleFolder, string? modName, string? modAuthor, string? modDescription)
 	{
 		this.originalBundleFolder = originalBundleFolder;
@@ -24,7 +24,7 @@ public class Carra
 		this.modDescription = modDescription ?? "";
 		tmpFolder = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(),
 			$"carra_{DateTime.Now.ToString("yyyy-MM-dd-H-m-ss")}"));
-		logFactory = Logging.Logging.CreateLogFactory("Carra");
+		logFactory = Logging.Logging.CreateLogFactory("Carra", "carraOutput.txt");
 	}
 
 	public Carra(string zipFile)
@@ -32,7 +32,7 @@ public class Carra
 		(originalBundleFolder, modBundleFolder) = ScanLunarModRoot(zipFile);
 		tmpFolder = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(),
 			$"carra_{DateTime.Now.ToString("yyyy-MM-dd-H-m-ss")}"));
-		logFactory = Logging.Logging.CreateLogFactory("Carra");
+		logFactory = Logging.Logging.CreateLogFactory("Carra","carraOutput.txt");
 	}
 	public string CreateModName()
 	{

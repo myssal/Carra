@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using Joveler.Compression.XZ;
 
-namespace Carra.Carra;
+namespace Carra;
 
 public partial class LZMA_XZ
 {

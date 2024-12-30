@@ -1,6 +1,6 @@
 using Joveler.Compression.XZ;
 
-namespace Carra.Carra;
+namespace Carra;
 
 public class Decompress
 {

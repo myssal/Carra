@@ -2,7 +2,7 @@ using System.IO.Compression;
 using AssetsTools.NET;
 using AssetsTools.NET.Extra;
 using SharpCompress.Compressors.Xz;
-namespace Carra.Carra;
+namespace Carra;
 
 public class CarraUnpack
 {
