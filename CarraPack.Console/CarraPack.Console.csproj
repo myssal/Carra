@@ -15,11 +15,4 @@
       <PackageReference Include="xxHash.NET" Version="1.0.2" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="TestBundle\1ce\mod\" />
-      <Folder Include="TestBundle\1ce\raw\" />
-      <Folder Include="TestBundle\py\mod\" />
-      <Folder Include="TestBundle\py\original\" />
-    </ItemGroup>
-
 </Project>

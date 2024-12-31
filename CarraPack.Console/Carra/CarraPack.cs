@@ -3,7 +3,7 @@ using AssetsTools.NET;
 using AssetsTools.NET.Extra;
 using Extensions.Data;
 using Microsoft.Extensions.Logging;
-using Carra.Logging;
+using static Carra.LZMA_XZ;
 namespace Carra;
 
 public class Carra
@@ -25,6 +25,7 @@ public class Carra
 		tmpFolder = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(),
 			$"carra_{DateTime.Now.ToString("yyyy-MM-dd-H-m-ss")}"));
 		logFactory = Logging.Logging.CreateLogFactory("Carra", "outputLog.txt");
+		InitNativeLibrary();
 	}
 
 	public Carra(string zipFile)
@@ -33,6 +34,7 @@ public class Carra
 		tmpFolder = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(),
 			$"carra_{DateTime.Now.ToString("yyyy-MM-dd-H-m-ss")}"));
 		logFactory = Logging.Logging.CreateLogFactory("Carra","outputLog.txt");
+		InitNativeLibrary();
 	}
 	public string CreateModName()
 	{
@@ -100,7 +102,7 @@ public class Carra
     }
     public void CompressLunarMod(string output)
 		{
-			AssetsManager manager = new AssetsManager();
+			
 			List<string> originalBundles =
 				Directory.GetFiles(originalBundleFolder, "*__data", SearchOption.AllDirectories).ToList();
 			List<string> modBundles = Directory.GetFiles(modBundleFolder, "*__data", SearchOption.AllDirectories).ToList();
@@ -112,6 +114,7 @@ public class Carra
 				{
 					try
 					{
+						AssetsManager manager = new AssetsManager();
 						// vanilla assets processing
 						logFactory.LogInformation($"Processing {vanillaPath}...");
 						logFactory.LogInformation($"Mapping assets...");
@@ -121,6 +124,7 @@ public class Carra
 							logFactory.LogInformation($"File {expectedModBundlePath} does not exist, skipping.");
 						else
 						{
+							logFactory.LogInformation($"Processing mod bundle: {expectedModBundlePath}...");
 							// mod assets processing
 							var bunInst = manager.LoadBundleFile(expectedModBundlePath, true);
 							var afileInst = manager.LoadAssetsFileFromBundle(bunInst, 0, false);
@@ -131,6 +135,7 @@ public class Carra
 									Path.Combine(
 										expectedModBundlePath.Replace(@"\__data", string.Empty)
 											.Replace($"{modBundleFolder}\\", String.Empty), texInfo.PathId.ToString());
+								logFactory.LogInformation($"{key}");
 								byte[] body = GetRawData(texInfo, afile);
 								var state = XXHash.CreateState64();
 								XXHash.UpdateState64(state, body);
@@ -138,10 +143,10 @@ public class Carra
 								if (vanillaDicts.ContainsKey(key) && vanillaDicts[key] == digest) continue;
 								if (!vanillaDicts.ContainsKey(key))
 									logFactory.LogInformation($"New object found: {key}");
-
+								
 								key += $".{texInfo.TypeIdOrIndex.ToString()}";
 								logFactory.LogInformation($"Writing {key}...");
-
+								
 								File.WriteAllBytes(Path.Combine(tmpFolder.FullName, "test.bytes"), body);
 								//var outputDir = Directory.CreateDirectory(Path.Combine(output, key.Remove(key.LastIndexOf("\\"))));
 								LZMA_XZ.XZCompress(Path.Combine(tmpFolder.FullName, "test.bytes"),
@@ -149,7 +154,7 @@ public class Carra
 							}
 
 							Metadata(Path.Combine(output, "metadata"));
-						}
+						}	
 					}
 					catch (Exception e)
 					{
