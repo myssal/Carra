@@ -5,11 +5,11 @@ namespace Carra.Logging;
 
 public class Logging
 {
-    // create instances for each log options
+    // append log to existing file
     public static ILogger  CreateLogFactory(string categoryName, string logOutputFilePath)
     {
         var factory = new LoggerFactory();
-        factory.AddProvider(new FileLoggerProvider(logOutputFilePath, false));
+        factory.AddProvider(new FileLoggerProvider(logOutputFilePath, true));
         var logger = factory.CreateLogger(categoryName);
         return logger;
     }

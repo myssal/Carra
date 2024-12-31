@@ -14,7 +14,7 @@ public class Carra
 	public string modAuthor { get; set; } 
 	public string modDescription { get; set; } 
 	public DirectoryInfo tmpFolder { get; set; }
-	public static ILogger logFactory { get; set; }	
+	public ILogger logFactory { get; set; }	
 	public Carra(string originalBundleFolder, string modBundleFolder, string? modName, string? modAuthor, string? modDescription)
 	{
 		this.originalBundleFolder = originalBundleFolder;
@@ -24,7 +24,7 @@ public class Carra
 		this.modDescription = modDescription ?? "";
 		tmpFolder = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(),
 			$"carra_{DateTime.Now.ToString("yyyy-MM-dd-H-m-ss")}"));
-		logFactory = Logging.Logging.CreateLogFactory("Carra", "carraOutput.txt");
+		logFactory = Logging.Logging.CreateLogFactory("Carra", "outputLog.txt");
 	}
 
 	public Carra(string zipFile)
@@ -32,7 +32,7 @@ public class Carra
 		(originalBundleFolder, modBundleFolder) = ScanLunarModRoot(zipFile);
 		tmpFolder = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(),
 			$"carra_{DateTime.Now.ToString("yyyy-MM-dd-H-m-ss")}"));
-		logFactory = Logging.Logging.CreateLogFactory("Carra","carraOutput.txt");
+		logFactory = Logging.Logging.CreateLogFactory("Carra","outputLog.txt");
 	}
 	public string CreateModName()
 	{
@@ -104,50 +104,63 @@ public class Carra
 			List<string> originalBundles =
 				Directory.GetFiles(originalBundleFolder, "*__data", SearchOption.AllDirectories).ToList();
 			List<string> modBundles = Directory.GetFiles(modBundleFolder, "*__data", SearchOption.AllDirectories).ToList();
-			Dictionary<string, ulong> vanillaDicts = new Dictionary<string, ulong>();
 			if (originalBundles.Count == 0)
-				logFactory.LogInformation("No bundles found in root directory!");
+				logFactory.LogWarning("No bundles found in root directory!");
 			else
 			{
 				foreach (string vanillaPath in originalBundles)
 				{
-					// vanilla assets processing
-					logFactory.LogInformation($"Processing {vanillaPath}...");
-					logFactory.LogInformation($"Mapping assets...");
-					vanillaDicts = Dump(vanillaPath, originalBundleFolder);
-					string expectedModBundlePath = vanillaPath.Replace(originalBundleFolder, modBundleFolder);
-					if (!File.Exists(expectedModBundlePath))
-						logFactory.LogInformation($"File {expectedModBundlePath} does not exist, skipping.");
-					else
+					try
 					{
-						// mod assets processing
-						var bunInst = manager.LoadBundleFile(expectedModBundlePath, true);
-						var afileInst = manager.LoadAssetsFileFromBundle(bunInst, 0, false);
-						var afile = afileInst.file;
-						foreach (var texInfo in afile.Metadata.AssetInfos)
+						// vanilla assets processing
+						logFactory.LogInformation($"Processing {vanillaPath}...");
+						logFactory.LogInformation($"Mapping assets...");
+						Dictionary<string, ulong> vanillaDicts = Dump(vanillaPath, originalBundleFolder);
+						string expectedModBundlePath = vanillaPath.Replace(originalBundleFolder, modBundleFolder);
+						if (!File.Exists(expectedModBundlePath))
+							logFactory.LogInformation($"File {expectedModBundlePath} does not exist, skipping.");
+						else
 						{
-							string key = Path.Combine(expectedModBundlePath.Replace(@"\__data", string.Empty).Replace($"{modBundleFolder}\\", String.Empty), texInfo.PathId.ToString());
-							byte[] body = GetRawData(texInfo, afile);
-							var state = XXHash.CreateState64();	
-							XXHash.UpdateState64(state, body);
-							var digest = XXHash.DigestState64(state);
-							if (vanillaDicts.ContainsKey(key) && vanillaDicts[key] == digest) continue;
-							if (!vanillaDicts.ContainsKey(key))
-								logFactory.LogInformation($"New object found: {key}");
+							// mod assets processing
+							var bunInst = manager.LoadBundleFile(expectedModBundlePath, true);
+							var afileInst = manager.LoadAssetsFileFromBundle(bunInst, 0, false);
+							var afile = afileInst.file;
+							foreach (var texInfo in afile.Metadata.AssetInfos)
+							{
+								string key =
+									Path.Combine(
+										expectedModBundlePath.Replace(@"\__data", string.Empty)
+											.Replace($"{modBundleFolder}\\", String.Empty), texInfo.PathId.ToString());
+								byte[] body = GetRawData(texInfo, afile);
+								var state = XXHash.CreateState64();
+								XXHash.UpdateState64(state, body);
+								var digest = XXHash.DigestState64(state);
+								if (vanillaDicts.ContainsKey(key) && vanillaDicts[key] == digest) continue;
+								if (!vanillaDicts.ContainsKey(key))
+									logFactory.LogInformation($"New object found: {key}");
 
-							key += $".{texInfo.TypeIdOrIndex.ToString()}";
-							logFactory.LogInformation($"Writing {key}...");
-							
-							File.WriteAllBytes(Path.Combine(tmpFolder.FullName, "test.bytes"), body);
-							var outputDir = Directory.CreateDirectory(Path.Combine(output, key.Remove(key.LastIndexOf("\\"))));
-							LZMA_XZ.XZCompress(Path.Combine(tmpFolder.FullName, "test.bytes"), Path.Combine(output, key));
+								key += $".{texInfo.TypeIdOrIndex.ToString()}";
+								logFactory.LogInformation($"Writing {key}...");
+
+								File.WriteAllBytes(Path.Combine(tmpFolder.FullName, "test.bytes"), body);
+								//var outputDir = Directory.CreateDirectory(Path.Combine(output, key.Remove(key.LastIndexOf("\\"))));
+								LZMA_XZ.XZCompress(Path.Combine(tmpFolder.FullName, "test.bytes"),
+									Path.Combine(output, key));
+							}
+
+							Metadata(Path.Combine(output, "metadata"));
 						}
-						Metadata(Path.Combine(output, "metadata"));
+					}
+					catch (Exception e)
+					{
+						logFactory.LogError(e.Message);
+						logFactory.LogError(e.StackTrace);
+						throw;
 					}
 				}
 				
 				if (File.Exists("test.bytes")) File.Delete("test.bytes");
-				if (File.Exists($"{output}.carra3")) logFactory.LogInformation($"{output}.carra3 already exists!");
+				if (File.Exists($"{output}.carra3")) logFactory.LogError($"{output}.carra3 already exists!");
 				else
 				{
 					ZipFile.CreateFromDirectory(output, $"{output}.carra3");
